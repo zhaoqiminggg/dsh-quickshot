@@ -2,11 +2,11 @@
 
 在**任意界面**按一下快捷键，框选一块屏幕，截图**直接进入 DSH 当前会话的输入框**——不用切回 DSH，不用找文件，不用拖拽。
 
-![快捷键截图](docs/hero.png)
+![快捷键截图](docs/hero.jpg)
 
-![以前三步，现在两步](docs/compare.png)
+![以前三步，现在两步](docs/compare.jpg)
 
-![六项能力](docs/features.png)
+![六项能力](docs/features.jpg)
 
 ---
 
