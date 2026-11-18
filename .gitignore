@@ -1,0 +1,4 @@
+native/*.exe
+native/*.pdb
+preview.png
+native/selftest.txt

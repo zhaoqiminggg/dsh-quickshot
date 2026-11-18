@@ -1,0 +1,63 @@
+{
+  "name": "dsh-quickshot",
+  "version": "0.2.1",
+  "type": "module",
+  "description": "Alt+A 全局快捷键截图：任意窗口框选，图片直接进入当前会话输入框",
+  "license": "MIT",
+  "author": "ming <2665435710@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhaoqiminggg/dsh-quickshot.git"
+  },
+  "homepage": "https://github.com/zhaoqiminggg/dsh-quickshot#readme",
+  "bugs": {
+    "url": "https://github.com/zhaoqiminggg/dsh-quickshot/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "screenshot",
+    "screenshot-hotkey",
+    "snip",
+    "region-capture",
+    "windows",
+    "composer"
+  ],
+  "os": [
+    "win32"
+  ],
+  "engines": {
+    "dsh": ">=0.2.0-rc.2 <0.3.0-0"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "native/quickshot.cs",
+    "locale/*.json",
+    "docs",
+    "screenshots.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

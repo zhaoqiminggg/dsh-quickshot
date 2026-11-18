@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Hotkey screenshot",
+    "description": "Press Alt+A to snip any window; the image lands in the composer of the current session while DSH stays in the background. When no session is open, it first asks whether to pick one."
+  }
+}
