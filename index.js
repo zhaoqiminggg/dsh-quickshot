@@ -223,14 +223,42 @@ export function apply(ctx, config = {}) {
     log(`热键监听已启动：${labelOf(current)}`)
   }
 
-  ctx.inject(['webServer'], (webCtx) => {
+  ctx.inject(['webServer', 'connection'], (webCtx) => {
+    /**
+     * 拒绝不该进来的请求。
+     *
+     * DSH 的 `connection.requestRejection` 会核对三样东西：Host/Origin 是不是本服务、
+     * 有没有已认证的浏览器会话、Token 对不对。浏览器里随便打开一个网页伪造不了这些，
+     * 所以拿不到我们的截图接口。返回 403/401 表示要拒绝，undefined 表示放行。
+     *
+     * 注意：`connection` 必须写进上面的 inject 列表，否则 Cordis 的服务隔离会让它
+     * 在这里不可见（实测踩过：不写进 inject，取到的永远是 undefined）。
+     */
+    const connection = webCtx.connection
+    log(connection === undefined
+      ? '路由守卫未启用：拿不到 connection 服务，退回请求头校验'
+      : '路由守卫已启用：connection.requestRejection')
+
+    const untrusted = (req, res) => {
+      if (connection === undefined) {
+        if (req.headers['x-dsh-quickshot']) return false
+        sendJson(res, 403, { error: 'forbidden' })
+        return true
+      }
+      const rejection = connection.requestRejection(req)
+      if (rejection === undefined) return false
+      res.writeHead(rejection, { 'cache-control': 'no-store' })
+      res.end()
+      return true
+    }
+
     // 网页半边来取图：最多挂 20 秒，取到就立刻返回，没有就 204。
     webCtx.effect(() => webCtx.webServer.register({
       kind: 'exact',
       path: '/quickshot/pending',
       handler: async (req, res) => {
         if (req.method !== 'GET') return sendJson(res, 405, { error: 'method not allowed' })
-        if (!req.headers['x-dsh-quickshot']) return sendJson(res, 403, { error: 'forbidden' })
+        if (untrusted(req, res)) return
         let wait = 20000
         try {
           const raw = new URL(req.url ?? '/', 'http://127.0.0.1').searchParams.get('wait')
@@ -256,7 +284,7 @@ export function apply(ctx, config = {}) {
       kind: 'exact',
       path: '/quickshot/capture',
       handler: (req, res) => {
-        if (!req.headers['x-dsh-quickshot']) return sendJson(res, 403, { error: 'forbidden' })
+        if (untrusted(req, res)) return
         if (exePath === null) return sendJson(res, 503, { error: 'helper not ready' })
         const target = path.join(queueDir, `direct-${process.pid}-${Date.now()}.png`)
         const child = spawn(exePath, ['--select', target], { windowsHide: true, stdio: 'ignore' })
@@ -279,7 +307,7 @@ export function apply(ctx, config = {}) {
       kind: 'exact',
       path: '/quickshot/log',
       handler: (req, res) => {
-        if (!req.headers['x-dsh-quickshot']) return sendEmpty(res, 403)
+        if (untrusted(req, res)) return
         try {
           const message = new URL(req.url ?? '/', 'http://127.0.0.1').searchParams.get('msg')
           if (message !== null) log(`[client] ${message.slice(0, 400)}`)
@@ -293,7 +321,7 @@ export function apply(ctx, config = {}) {
       kind: 'exact',
       path: '/quickshot/settings',
       handler: (req, res) => {
-        if (!req.headers['x-dsh-quickshot']) return sendJson(res, 403, { error: 'forbidden' })
+        if (untrusted(req, res)) return
         if (req.method === 'GET') {
           return sendJson(res, 200, {
             ok: true,
@@ -325,7 +353,7 @@ export function apply(ctx, config = {}) {
       kind: 'exact',
       path: '/quickshot/ask',
       handler: (req, res) => {
-        if (!req.headers['x-dsh-quickshot']) return sendJson(res, 403, { error: 'forbidden' })
+        if (untrusted(req, res)) return
         if (exePath === null) return sendJson(res, 503, { error: 'helper not ready' })
         const child = spawn(exePath, [
           '--ask', 'DSH 截图', '请选择截图输入的会话。\n\n点「确定」后选择要接收这张截图的会话；点「取消」丢弃这张截图。',
@@ -340,7 +368,7 @@ export function apply(ctx, config = {}) {
       kind: 'exact',
       path: '/quickshot/focus',
       handler: (req, res) => {
-        if (!req.headers['x-dsh-quickshot']) return sendJson(res, 403, { error: 'forbidden' })
+        if (untrusted(req, res)) return
         if (exePath === null) return sendJson(res, 503, { error: 'helper not ready' })
         const child = spawn(exePath, ['--focus', String(process.ppid)], { windowsHide: true, stdio: 'ignore' })
         child.once('close', () => sendJson(res, 200, { ok: true }))

@@ -1,6 +1,6 @@
 {
   "name": "dsh-quickshot",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "description": "Alt+A 全局快捷键截图：任意窗口框选，图片直接进入当前会话输入框",
   "license": "MIT",
